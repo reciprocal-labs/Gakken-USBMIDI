@@ -3,9 +3,8 @@
 // github.com/ddiakopoulos/hiduino to provide MIDI functionality via USB
 #include "MIDI.h"
 
-long previousMillis = 0;
-long interval = 1000;
 byte lastNoteOn;
+int notePlaying;
 
 MIDI_CREATE_DEFAULT_INSTANCE();
 
@@ -16,8 +15,7 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 #define SPICLOCK  13 //sck
 #define SLAVESELECT 10 //ss
 
-void gakken_write_value(uint16_t sample)
-{
+void gakken_write_value(uint16_t sample) {
   uint8_t dacSPI0 = 0;
   uint8_t dacSPI1 = 0;
   dacSPI0 = (sample >> 8) & 0x00FF;
@@ -39,14 +37,7 @@ void gakken_write_value(uint16_t sample)
   delay(5);
 }
 
-void gakken_playNote(byte channel, byte pitch, byte velocity)
-{
-  
-  lastNoteOn = pitch;
-  //int diff = 48 - pitch;
-  //diff *= 12;
-  //gakken_write_value(1210 - diff);
-  gakken_write_value(1152);
+uint16_t note_to_cv(byte pitch) {
   // DACval note MIDIval
   // 1270 C4 60
   // 1125 C3 48 (according to tuner this is actually G2)
@@ -62,19 +53,36 @@ void gakken_playNote(byte channel, byte pitch, byte velocity)
     B2  1200
     A2  btwn 1152 -> 1154 (!!)
     C3  1210
-  
   */
+  
+  int diff = 48 - pitch;
+  diff *= 12;
+  return 1210 - diff;
 }
 
-void gakken_noteOff(byte channel, byte pitch, byte velocity)
-{
-  if(pitch == lastNoteOn)
+void gakken_noteOn(byte channel, byte pitch, byte velocity) {
+  lastNoteOn = pitch;
+  notePlaying = 1;
+  uint16_t cv_value = note_to_cv(pitch);
+  gakken_write_value(cv_value);
+}
+
+void gakken_noteOff(byte channel, byte pitch, byte velocity) {
+  if(pitch == lastNoteOn && notePlaying == 1){
+      notePlaying = 0;
       gakken_write_value(0);
+  }
 }
 
-// noop for unimplemented features
-void do_nothing(byte channel, byte pitch, byte velocity){
-  return;
+void gakken_pitchBend(byte channel, int bend) {
+  if(notePlaying == 1){
+    int current_cv_value = note_to_cv(lastNoteOn);
+    float bendAmount = (1 + ((float) bend) / 8190);
+    int bentVal = current_cv_value * bendAmount;
+    
+    if (bentVal > 0)
+      gakken_write_value(bentVal);
+  }
 }
 
 void setup()
@@ -95,20 +103,11 @@ void setup()
 
   // MIDI library configuration
   MIDI.begin(MIDI_CHANNEL_OMNI);
-  MIDI.setHandleNoteOn(gakken_playNote);
+  MIDI.setHandleNoteOn(gakken_noteOn);
   MIDI.setHandleNoteOff(gakken_noteOff);
+  MIDI.setHandlePitchBend(gakken_pitchBend);
 }
 
 void loop() {
-
-    unsigned long currentMillis = millis();
-
-    if(currentMillis - previousMillis > interval)
-    {
-      MIDI.sendNoteOn(60, 60, 1);
-      previousMillis = currentMillis;
-    }
-
-  
     MIDI.read();
 }
