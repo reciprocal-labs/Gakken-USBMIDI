@@ -3,6 +3,10 @@
 // github.com/ddiakopoulos/hiduino to provide MIDI functionality via USB
 #include "MIDI.h"
 
+long previousMillis = 0;
+long interval = 1000;
+byte lastNoteOn;
+
 MIDI_CREATE_DEFAULT_INSTANCE();
 
 // Implements SPI for use with the MCP4921 DAC, which
@@ -37,9 +41,13 @@ void gakken_write_value(uint16_t sample)
 
 void gakken_playNote(byte channel, byte pitch, byte velocity)
 {
-  int diff = 48 - pitch;
-  diff *= 12;
-  gakken_write_value(1125 - diff);
+  
+  lastNoteOn = pitch;
+  //int diff = 48 - pitch;
+  //diff *= 12;
+  //gakken_write_value(1210 - diff);
+  gakken_write_value(1152);
+  // DACval note MIDIval
   // 1270 C4 60
   // 1125 C3 48 (according to tuner this is actually G2)
   // 980  C2 36
@@ -53,13 +61,15 @@ void gakken_playNote(byte channel, byte pitch, byte velocity)
     G2  1125
     B2  1200
     A2  btwn 1152 -> 1154 (!!)
+    C3  1210
   
   */
 }
 
 void gakken_noteOff(byte channel, byte pitch, byte velocity)
 {
-  gakken_write_value(0);
+  if(pitch == lastNoteOn)
+      gakken_write_value(0);
 }
 
 // noop for unimplemented features
@@ -86,11 +96,19 @@ void setup()
   // MIDI library configuration
   MIDI.begin(MIDI_CHANNEL_OMNI);
   MIDI.setHandleNoteOn(gakken_playNote);
-  MIDI.setHandleControlChange(do_nothing);
   MIDI.setHandleNoteOff(gakken_noteOff);
 }
 
 void loop() {
-    gakken_write_value(980);
+
+    unsigned long currentMillis = millis();
+
+    if(currentMillis - previousMillis > interval)
+    {
+      MIDI.sendNoteOn(60, 60, 1);
+      previousMillis = currentMillis;
+    }
+
+  
     MIDI.read();
 }
