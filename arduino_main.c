@@ -5,6 +5,7 @@
 
 byte lastNoteOn;
 int notePlaying;
+float pitchBendMultiplier;
 
 MIDI_CREATE_DEFAULT_INSTANCE();
 
@@ -64,7 +65,7 @@ void gakken_noteOn(byte channel, byte pitch, byte velocity) {
   lastNoteOn = pitch;
   notePlaying = 1;
   uint16_t cv_value = note_to_cv(pitch);
-  gakken_write_value(cv_value);
+  gakken_write_value(cv_value * pitchBendMultiplier);
 }
 
 void gakken_noteOff(byte channel, byte pitch, byte velocity) {
@@ -75,12 +76,14 @@ void gakken_noteOff(byte channel, byte pitch, byte velocity) {
 }
 
 void gakken_pitchBend(byte channel, int bend) {
-  if(notePlaying == 1){
-    int current_cv_value = note_to_cv(lastNoteOn);
-    float bendAmount = (1 + ((float) bend) / 8190);
-    int bentVal = current_cv_value * bendAmount;
+  int current_cv_value = note_to_cv(lastNoteOn);
+  float bendAmount = 1 + (((float) bend) / 8190);
+  int bentVal = current_cv_value * bendAmount;
+
+  if (bentVal > 0){
+    pitchBendMultiplier = bendAmount;
     
-    if (bentVal > 0)
+    if(notePlaying == 1)
       gakken_write_value(bentVal);
   }
 }
@@ -100,6 +103,10 @@ void setup()
   clr=SPDR;
   
   delay(10);
+  
+  lastNoteOn = 0;
+  notePlaying = 0;
+  pitchBendMultiplier = 1;
 
   // MIDI library configuration
   MIDI.begin(MIDI_CHANNEL_OMNI);
