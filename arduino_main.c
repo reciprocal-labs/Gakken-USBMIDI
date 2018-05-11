@@ -3,16 +3,14 @@
 // github.com/ddiakopoulos/hiduino to provide MIDI functionality via USB
 #include "MIDI.h"
 
-
 /*
   State keeps track of the synthesizer's current state in a
   globally accessable struct.
   
   Values are updated on an as-needed basis by handler functions according to messages
-  recieved via MIDI.
-  
-  Values are read in cases where the functionality of some handlers is
-  affected by the synthesizer's current state.
+  recieved via MIDI. Values are read in cases where the functionality of some handlers is
+  affected by the synthesizer's current state, or when such state is needed to enforce sanity
+  checks.
   
   For example:
   
@@ -29,7 +27,7 @@
     
     To enforce this, the noteOff message handler will check against the current state: A noteOff for C3 would cause C3 to stop
     playing if and only if the value of lastNotePlayed is C3, and a note is currently being played (i.e noteIsPlaying = 1).
-    In practice, this works like so: if you were to play C, then tap E (while still holding C), and release C (while still
+    In practice, this works like so: if you were to play C, then tap E (while still holding C), then release C (while still
     holding E), E would remain playing.
   
   Pitch Bend:
@@ -109,15 +107,22 @@ uint16_t note_to_cv(byte pitch) {
   return 1210 - diff;
 }
 
+void glide_to_note(uint16_t cv_value){
+  // state.noteIsGliding (?)
+  return;
+}
+
 void handle_noteOn(byte channel, byte pitch, byte velocity) {
   state.lastNotePlayed = pitch;
+  state.lastNoteCV = note_to_cv(pitch);
   state.noteIsPlaying = 1;
-  uint16_t cv_value = note_to_cv(pitch);
   
+  // Hook noteOn to apply a glide between notes, if applicable.
+  // state.noteGlideRate will equal 0 if the Mod wheel (CC #1) is zeroed
   if(state.noteGlideRate > 0)
-    glide_to(cv_value);
+    glide_to_note(state.lastNoteCV);
   
-  gakken_write_value(cv_value * state.pitchBendMultiplier);
+  gakken_write_value(state.lastNoteCV * state.pitchBendMultiplier);
 }
 
 
@@ -133,12 +138,16 @@ void handle_noteOff(byte channel, byte pitch, byte velocity) {
 }
 
 void handle_pitchBend(byte channel, int bend) {
-  int current_cv_value = note_to_cv(state.lastNotePlayed);
   float bendAmount = 1 + (((float) bend) / 8190);
-  int bentVal = current_cv_value * bendAmount;
+  int bentVal = state.lastNoteCV * bendAmount;
 
-  // After bending, the next CV value we're going to write should never
-  // be less than 0.
+  /*
+    Sanity check - After bending, the next CV value we're going to
+    write should never be less than 0.
+    
+    This function is called on any pitchbend message, so it's
+    OK to short circuit here. Only valid results will be applied.
+  */
   if (bentVal < 0)
     return;
     
@@ -148,13 +157,17 @@ void handle_pitchBend(byte channel, int bend) {
     gakken_write_value(bentVal);
 }
 
+void handle_glideParamUpdate(uint16_t cv_value){
+  return;
+}
+
 // Recieves all incoming Control Change messages (CC), and dispatches
 // the payloads to their appropriate handlers
 void handle_CC(byte channel, byte number, byte value){
   
   switch(number){
     case 1: // MIDI CC #1 is the Mod Wheel
-      set_glide_parameters(channel, number, value);
+      handle_glideParamUpdate(channel, number, value);
       break;
       
     default:
@@ -193,4 +206,7 @@ void setup()
 
 void loop() {
     MIDI.read();
+    
+    // NOTE: might be necessary to perform note gliding here to prevent blocking
+    // the main thread in a handler?
 }
