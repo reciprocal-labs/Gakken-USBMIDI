@@ -71,7 +71,7 @@
 #include "MIDI.h"
 
 // The maximum possible time to glide to a new note in glide mode
-#define MAX_GLIDE_TIME 5000
+#define MAX_GLIDE_TIME 2000
 
 struct State {
   int noteIsPlaying; // Is a note currently playing?
@@ -155,13 +155,14 @@ uint16_t note_to_cv(byte pitch) {
 
 void glide_to_note(uint16_t target_cv){
   uint16_t tmp_cv = state.lastNoteCV;
-  int pitch_range = abs(tmp_cv - target_cv);
-  
+  int pitch_range = abs(target_cv - tmp_cv);
   int time_between_pitches = state.noteGlideTime / pitch_range;
+  int direction = (target_cv - tmp_cv > 0) ? 1 : -1;
 
-  while(tmp_cv <= target_cv && state.noteIsGliding == 1){
+  while(pitch_range > 0 && state.noteIsGliding == 1){
+    tmp_cv += (1 * direction);
     gakken_write_value(tmp_cv);
-    tmp_cv++;
+    pitch_range--;
     delay(time_between_pitches);
   }
   
@@ -223,7 +224,7 @@ void handle_glideParamUpdate(byte channel, byte number, byte value){
     state.noteIsGliding = 0;
   }
   
-  state.noteGlideTime = (1 + (((float) value) / 127)) * MAX_GLIDE_TIME;
+  state.noteGlideTime = (((float) value) / 127) * MAX_GLIDE_TIME;
 }
 
 // Recieves all incoming Control Change messages (CC), and dispatches
@@ -250,7 +251,8 @@ void setup()
   state.noteIsPlaying = 0;
   state.pitchBendMultiplier = 1;
   state.noteGlideTime = 0;
-
+  state.noteIsGliding = 0;
+    
   // MIDI library configuration
   MIDI.begin(MIDI_CHANNEL_OMNI);
   MIDI.setHandleNoteOn(handle_noteOn);
