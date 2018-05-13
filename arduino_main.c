@@ -155,15 +155,25 @@ uint16_t note_to_cv(byte pitch) {
 
 void glide_to_note(uint16_t target_cv){
   uint16_t tmp_cv = state.lastNoteCV;
-  int pitch_range = abs(target_cv - tmp_cv);
+  int pitch_range;
+  
+  // Encountered odd problems with abs(), so this is my workaround
+  if(target_cv < state.lastNoteCV)
+    pitch_range = tmp_cv - target_cv;
+  else
+    pitch_range = target_cv - tmp_cv;
+  
   int time_between_pitches = state.noteGlideTime / pitch_range;
-  int direction = (target_cv - tmp_cv > 0) ? 1 : -1;
 
-  while(pitch_range > 0 && state.noteIsGliding == 1){
-    tmp_cv += (1 * direction);
+  while(tmp_cv != target_cv && state.noteIsGliding == 1){
+    
+    if(target_cv < state.lastNoteCV)
+      tmp_cv--;
+    else
+      tmp_cv++;
+
     gakken_write_value(tmp_cv);
-    pitch_range--;
-    delay(time_between_pitches);
+    delay(time_between_pitches); // THIS could be the problem is time_between_pitches isn't calculated right.
   }
   
   state.noteIsGliding = 0;
