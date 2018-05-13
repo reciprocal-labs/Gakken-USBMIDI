@@ -7,4 +7,6 @@ First, you'll find a scan of the user manual/magazine which first introduced the
 The included schematic is from the first prototype version of the synth, and is apparently more or less
 congruent with what you'll find in the actual production unit.
 
+[More specifications from synthpalace](http://synthpalace.com/gakken-sx-150-mk-ii/).
+
 Also useful is the following blog post from Gan (@naokiiwakami), who designed the SX-150 Mk 1 & 2: http://gaje.jp/2011/10/09/2384/
