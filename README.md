@@ -2,7 +2,7 @@
 
 Welcome!
 
-This project provides a standalone MIDI interface for the Gakken SX-150 synthesizer, based on the Arduino UNO r3. The interface is simple to use: Simply plug the USB connector into your workstation, and connect the remaining two cables to your Gakken to provide CV.
+This project provides a standalone MIDI interface for the Gakken SX-150 synthesizer, and provides useable firmwares/sketches for the Arduino UNO r3 as well as the Leonardo or Pro Micro. The interface is simple to use: Simply plug the USB connector from your workstation to the MCU, and connect the remaining cables to your Gakken to provide CV.
 
 As the interface itself is a fully class compliant USB MIDI device, the unit is fully standalone. No drivers are needed, and there is no client-side software to install or run- just plug and play! This interface has been successfully tested on macOS and iOS.
 
@@ -24,4 +24,4 @@ See it in action:
 
 
 TODO/Caveats:
-- Tuning is way out of whack! (I'll need to bust out the multimeter and fiddle around)
+- ~~Tuning is way out of whack! (I'll need to bust out the multimeter and fiddle around)~~ _seems fixed in the Pro Micro version!_
