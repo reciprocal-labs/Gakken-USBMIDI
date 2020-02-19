@@ -18,9 +18,9 @@ A great deal of background information on the SX-150, including schematics, can 
 More information, including wiring schematics for the interface, setup/build instructions, and more are forthcoming. The project is functional and very near complete, but remains a work in progress at the moment.
 
 See it in action:
-  * [Gakken SX-150 MIDI Mod: Sound Demo](https://www.youtube.com/watch?v=0jBtd83PXs0)
-  * [Gakken SX-150 MIDI Mod: Sequencing and Control Demo](https://www.youtube.com/watch?v=DJfP2l-co0g)
-  * [Gakken SX-150 MIDI Mod: Pitch Bend Controls! (and effects)](https://www.youtube.com/watch?v=q7sJMQLbhoQ)
+  * [Gakken SX-150 MIDI Mod: Sound Demo](https://cdn.ctis.me/file/ctisme-cdn/files-pub/video/projects/Gakken+SX-150+MIDI+Mod+-+Sound+Demo.mp4)
+  * [Gakken SX-150 MIDI Mod: Sequencing and Control Demo](https://cdn.ctis.me/file/ctisme-cdn/files-pub/video/projects/Gakken+SX-150+MIDI+Mod+-+Sequencing+and+Control+Demo.mp4)
+  * [Gakken SX-150 MIDI Mod: Pitch Bend Controls! (and effects)](https://cdn.ctis.me/file/ctisme-cdn/files-pub/video/projects/Gakken+SX-150+MIDI+Mod+-+Pitch+Bend+Controls!+(and+effects).mp4)
 
 
 TODO/Caveats:
